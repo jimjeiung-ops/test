@@ -1,0 +1,2413 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>機構設計審查系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#F3F5F8;
+    --panel:#FFFFFF;
+    --panel-2:#F7F8FA;
+    --paper:#1F2933;
+    --paper-dim:#667385;
+    --line:#D5DBE3;
+    --steel:#1F4E8C;
+    --steel-dim:#173E70;
+    --amber:#B7791F;
+    --green:#2F7D4F;
+    --rust:#B83232;
+    --violet:#1F4E8C;
+    --pink:#B83232;
+    --sky:#1F4E8C;
+    --radius:6px;
+    --header-bg:#1F3A5F;
+    --header-fg:#FFFFFF;
+    --accent-soft:#EEF3F9;
+    --accent-ring:rgba(31,78,140,0.14);
+  }
+  /* ---- 配色主題（由「更多」選單切換）---- */
+  :root[data-theme="light"]{
+    --header-bg:#F7F8FA; --header-fg:#1F2933;
+  }
+  :root[data-theme="graphite"]{
+    --ink:#F2F3F5; --steel:#374151; --steel-dim:#1F2937;
+    --header-bg:#2B3440; --accent-soft:#EEF0F3; --accent-ring:rgba(55,65,81,0.18);
+  }
+  :root[data-theme="teal"]{
+    --ink:#F1F6F6; --steel:#0F766E; --steel-dim:#0B5C56;
+    --header-bg:#134E4A; --accent-soft:#E8F5F3; --accent-ring:rgba(15,118,110,0.16);
+  }
+  :root[data-theme="forest"]{
+    --ink:#F2F6F3; --steel:#2E6B4A; --steel-dim:#235239;
+    --header-bg:#1F4A33; --accent-soft:#EAF4EE; --accent-ring:rgba(46,107,74,0.16);
+  }
+  :root[data-theme="bronze"]{
+    --ink:#F6F4F0; --steel:#7A5C2E; --steel-dim:#5F4721;
+    --header-bg:#4A3B28; --accent-soft:#F6F1E8; --accent-ring:rgba(122,92,46,0.18);
+  }
+  .swatch{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:8px; vertical-align:-1px; border:1px solid rgba(0,0,0,0.15); }
+  .menu .menu-label{ font-size:11px; font-weight:600; color:var(--paper-dim); padding:6px 12px 2px; }
+
+  * { box-sizing: border-box; }
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:1040px;
+    margin:0 auto;
+    padding:24px 24px 64px;
+  }
+  h1,h2{ font-family:inherit; }
+
+  /* ---- Header / document info ---- */
+  .titleblock{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:16px;
+    background:var(--panel);
+  }
+  .titleblock-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 20px;
+    background:var(--header-bg);
+    color:var(--header-fg);
+    border-bottom:1px solid var(--line);
+  }
+  .titleblock-top h1{
+    font-size:18px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:0.02em;
+    color:var(--header-fg);
+  }
+  .titleblock-top .tag{
+    font-weight:600;
+    font-size:12px;
+    color:var(--header-fg);
+    border:1px solid currentColor;
+    opacity:0.85;
+    padding:3px 10px;
+    border-radius:3px;
+    letter-spacing:0.04em;
+  }
+  .tb-grid{
+    display:grid;
+    grid-template-columns:2fr 1.9fr 1.2fr 1.2fr 0.8fr;
+    background:var(--panel);
+  }
+  .tb-cell{
+    padding:10px 16px;
+    border-right:1px solid var(--line);
+    background:var(--panel);
+  }
+  .tb-cell:last-child{ border-right:none; }
+  .tb-cell label{
+    display:block;
+    font-size:11px;
+    color:var(--paper-dim);
+    margin-bottom:3px;
+    font-weight:600;
+  }
+  .tb-cell input,.tb-cell select{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid transparent;
+    color:var(--paper);
+    font-family:inherit;
+    font-weight:500;
+    font-size:14px;
+    padding:2px 0;
+    outline:none;
+  }
+  .tb-cell input:hover,.tb-cell select:hover{ border-bottom-color:var(--line); }
+  .tb-cell input:focus,.tb-cell select:focus{ border-bottom-color:var(--steel); }
+  .tb-cell select option{ background:var(--panel); color:var(--paper); }
+
+  /* ---- Toolbar ---- */
+  select.review-select{
+    background:var(--panel);
+    border:1px solid #C3CBD6;
+    color:var(--paper);
+    padding:7px 10px;
+    border-radius:4px;
+    font-family:inherit;
+    font-weight:500;
+    font-size:13px;
+    min-width:240px;
+  }
+  button{
+    font-family:inherit;
+    font-weight:500;
+    font-size:13px;
+    cursor:pointer;
+    border-radius:4px;
+    border:1px solid #C3CBD6;
+    background:var(--panel);
+    color:var(--paper);
+    padding:7px 14px;
+    transition:background .12s, border-color .12s;
+  }
+  button:hover{ background:#EEF1F5; border-color:#A9B4C2; }
+  button.primary{ background:var(--steel); border-color:var(--steel); color:#fff; }
+  button.primary:hover{ background:var(--steel-dim); border-color:var(--steel-dim); }
+  button.unlocked{ background:#FFF4DB; border-color:#D9A441; color:#8A5A00; }
+  button.unlocked:hover{ background:#FFEBC2; border-color:#C58F2C; }
+  button.danger-ghost{ color:var(--rust); border-color:transparent; padding:7px 10px; background:transparent; }
+  button.danger-ghost:hover{ background:rgba(184,50,50,0.08); border-color:transparent; }
+  button.small{ padding:4px 10px; font-size:12px; }
+
+  /* ---- Summary ---- */
+
+  .overall-bar{
+    height:8px;
+    background:#E1E6ED;
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:16px;
+    display:flex;
+  }
+  .overall-bar div{ height:100%; transition:width .3s ease; }
+
+
+  /* ---- Categories ---- */
+  .category{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:12px;
+    overflow:hidden;
+    background:var(--panel);
+  }
+  .category-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    padding:10px 16px;
+    background:var(--panel-2);
+    cursor:pointer;
+    user-select:none;
+    transition:background .12s;
+  }
+  .category:not(.collapsed) .category-head{ border-bottom:1px solid var(--line); }
+  .category-head:hover{ background:#EEF1F5; }
+  .category-head-left{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+  .category-head h2{ font-size:14px; font-weight:600; margin:0; }
+  .cat-icon-num{
+    font-size:14px;
+    font-weight:600;
+    color:var(--paper-dim);
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .cat-name-input{
+    flex:1;
+    min-width:40px;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid transparent;
+    color:var(--paper);
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    padding:2px 4px;
+    outline:none;
+    cursor:text;
+    border-radius:3px;
+    transition:background .12s, border-color .12s;
+  }
+  .cat-name-input:hover{ background:var(--panel); border-bottom-color:var(--line); }
+  .cat-name-input:focus{ background:var(--panel); border-bottom-color:var(--steel); }
+  .reorder-btn{ padding:4px 8px; font-size:10px; line-height:1; }
+  .cat-progress{
+    font-weight:500;
+    font-size:12px;
+    color:var(--paper-dim);
+    font-variant-numeric:tabular-nums;
+  }
+  .cat-bar{
+    width:64px;height:6px;background:#E1E6ED;border-radius:3px;overflow:hidden;
+  }
+  .cat-bar div{ height:100%; transition:width .3s ease; }
+  .chevron{
+    color:var(--paper-dim);
+    transition:transform .15s;
+    font-size:12px;
+  }
+  .category.collapsed .chevron{ transform:rotate(-90deg); }
+  .category-body{ padding:0 0 12px; background:var(--panel); }
+  .category.collapsed .category-body{ display:none; }
+
+  /* ---- Items ---- */
+  .item-row{
+    padding:12px 16px 14px;
+    border-top:1px solid #E6EAF0;
+  }
+  .item-row:first-child{ border-top:none; }
+  .item-top{ display:flex; gap:10px; align-items:flex-start; }
+  .item-num{
+    font-weight:600;
+    font-size:12px;
+    color:var(--paper-dim);
+    min-width:34px;
+    padding-top:8px;
+    flex-shrink:0;
+    font-variant-numeric:tabular-nums;
+  }
+  .item-main{ flex:1; min-width:0; }
+  .item-reorder{
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+    margin-top:2px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .item-reorder-btn{
+    all:unset;
+    cursor:pointer;
+    font-size:9px;
+    line-height:1;
+    color:var(--paper-dim);
+    padding:3px 7px;
+    text-align:center;
+    transition:background .12s, color .12s;
+  }
+  .item-reorder-btn:hover{ background:#EEF1F5; color:var(--steel); }
+  .item-reorder-btn:first-child{ border-bottom:1px solid var(--line); }
+  .item-text{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1px dashed transparent;
+    color:var(--paper);
+    font-size:14px;
+    font-family:inherit;
+    font-weight:600;
+    resize:none;
+    line-height:1.5;
+    padding:5px 4px;
+    outline:none;
+    cursor:text;
+    border-radius:3px;
+    transition:background .12s, border-color .12s;
+  }
+  .item-text:hover{ background:var(--panel-2); border-bottom-color:var(--line); }
+  .item-text:focus{ background:var(--panel-2); border-bottom-color:var(--steel); }
+  .item-meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:4px;
+  }
+  .item-meta .field label{
+    display:block;
+    font-size:11px;
+    color:var(--paper-dim);
+    margin-bottom:3px;
+    font-weight:600;
+  }
+  .item-meta input, .meta-textarea{
+    width:100%;
+    background:var(--panel);
+    border:1px solid #C9D1DB;
+    border-radius:4px;
+    color:var(--paper);
+    font-size:13px;
+    padding:6px 9px;
+    font-family:inherit;
+    outline:none;
+  }
+  .meta-textarea{
+    resize:none;
+    line-height:1.5;
+    overflow:hidden;
+    display:block;
+  }
+  .item-meta input:focus, .meta-textarea:focus{ border-color:var(--steel); box-shadow:0 0 0 2px var(--accent-ring); }
+
+  .status-btn{
+    font-weight:500;
+    font-size:12px;
+    padding:4px 14px;
+    border-radius:4px;
+    border:1px solid #C9D1DB;
+    background:var(--panel);
+    color:var(--paper-dim);
+  }
+  .status-btn.active[data-s="pending"]{ background:#FFF4DB; border-color:#D9A441; color:#8A5A00; font-weight:600; }
+  .status-btn.active[data-s="pass"]{ background:#E4F3EA; border-color:#5FA67C; color:#1E6B43; font-weight:600; }
+  .status-btn.active[data-s="fail"]{ background:#FBE6E6; border-color:#D77A7A; color:#9B2323; font-weight:600; }
+  .status-btn.active[data-s="na"]{ background:#EDEFF2; border-color:#A6AFBB; color:#4B5563; font-weight:600; }
+  .move-select{
+    font-family:inherit;
+    font-weight:500;
+    font-size:12px;
+    padding:4px 8px;
+    border-radius:4px;
+    border:1px solid #C9D1DB;
+    background:var(--panel);
+    color:var(--paper-dim);
+    max-width:160px;
+  }
+  .move-select:hover{ border-color:var(--steel); color:var(--paper); }
+  .add-item-btn{ margin:10px 16px 0; }
+
+  /* ---- Bulk edit table ---- */
+  .bulk-table{
+    overflow-x:auto;
+    padding:0 0 4px;
+  }
+  .bulk-row{
+    display:grid;
+    grid-template-columns:44px 2fr 1.3fr 1.3fr 110px 130px 70px;
+    gap:8px;
+    align-items:center;
+    padding:6px 12px;
+    border-bottom:1px solid #E6EAF0;
+    min-width:900px;
+  }
+  .bulk-row.bulk-header{
+    font-size:12px;
+    font-weight:600;
+    color:var(--paper-dim);
+    background:var(--panel-2);
+    border-bottom:1px solid var(--line);
+  }
+  .bulk-cell.bulk-num{ font-weight:600; font-size:12px; color:var(--paper-dim); text-align:left; font-variant-numeric:tabular-nums; }
+  .bulk-input{
+    width:100%;
+    background:var(--panel);
+    border:1px solid #C9D1DB;
+    border-radius:4px;
+    color:var(--paper);
+    font-size:13px;
+    padding:5px 8px;
+    font-family:inherit;
+    outline:none;
+  }
+  .bulk-input:focus{ border-color:var(--steel); box-shadow:0 0 0 2px var(--accent-ring); }
+  .bulk-textarea{ resize:vertical; min-height:30px; line-height:1.4; }
+  .bulk-status-select{
+    width:100%;
+    background:var(--panel);
+    border:1px solid #C9D1DB;
+    border-radius:4px;
+    color:var(--paper);
+    font-size:12px;
+    font-weight:500;
+    padding:5px 4px;
+    font-family:inherit;
+    outline:none;
+  }
+  .bulk-cell.bulk-del{ display:flex; justify-content:center; align-items:center; gap:4px; }
+  .bulk-cell.bulk-del button.danger-ghost{ padding:3px 8px; }
+
+  /* ---- Mode toggle ---- */
+
+  /* ---- Brainstorm (fishbone) ---- */
+  .brainstorm-hint{
+    font-size:13px;
+    color:var(--paper);
+    margin-bottom:16px;
+    line-height:1.7;
+    background:var(--accent-soft);
+    border-left:3px solid var(--steel);
+    padding:10px 16px;
+    border-radius:4px;
+  }
+  .bone-card{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:12px;
+    background:var(--panel);
+    overflow:hidden;
+  }
+  .bone-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 16px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel-2);
+  }
+  .bone-head .bone-num{
+    font-weight:600;
+    font-size:12px;
+    color:var(--paper-dim);
+    min-width:16px;
+  }
+  .bone-name-input{
+    flex:1;
+    background:transparent;
+    border:none;
+    color:var(--paper);
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    outline:none;
+  }
+  .bone-body{ padding:12px 16px 14px; }
+  .point-row{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .point-dash{ color:var(--paper-dim); font-size:13px; }
+  .point-input{
+    flex:1;
+    background:var(--panel);
+    border:1px solid #C9D1DB;
+    border-radius:4px;
+    color:var(--paper);
+    font-size:13px;
+    padding:6px 10px;
+    font-family:inherit;
+    outline:none;
+  }
+  .point-input:focus{ border-color:var(--steel); box-shadow:0 0 0 2px var(--accent-ring); }
+  .add-point-btn{ margin-top:2px; }
+  .add-bone-row{ margin:6px 0 24px; }
+  .convert-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 0 8px;
+    border-top:1px solid var(--line);
+    margin-top:8px;
+    flex-wrap:wrap;
+  }
+  .convert-note{ font-size:12px; color:var(--paper-dim); }
+
+  /* ---- Panel (reused for "新增分類") ---- */
+  .signoff{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 18px 16px;
+    background:var(--panel);
+  }
+  .signoff h2{ font-size:14px; font-weight:600; margin:0 0 10px; }
+
+  .save-indicator{
+    position:fixed;
+    bottom:18px;
+    right:18px;
+    font-weight:500;
+    font-size:12px;
+    color:#fff;
+    background:#1F2933;
+    padding:7px 14px;
+    border-radius:4px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.2);
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .25s, transform .25s;
+    z-index:10001;
+  }
+  .save-indicator.show{ opacity:1; transform:translateY(0); }
+  .save-indicator.error{ background:var(--rust); }
+
+  .storage-warning{
+    background:#FFF4DB;
+    border:1px solid #D9A441;
+    border-radius:var(--radius);
+    padding:12px 16px;
+    margin-bottom:16px;
+    font-size:13px;
+    line-height:1.7;
+    color:var(--paper);
+  }
+
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--paper-dim); }
+  .empty-state p{ margin:6px 0; font-size:13px; }
+
+  /* ---- Images ---- */
+  .item-images{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .item-image-thumb{
+    position:relative;
+    width:84px; height:84px;
+    border-radius:4px;
+    overflow:hidden;
+    border:1px solid #C9D1DB;
+    cursor:zoom-in;
+    flex-shrink:0;
+    background:var(--panel-2);
+  }
+  .item-image-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .item-image-remove{
+    position:absolute;
+    top:3px; right:3px;
+    width:20px; height:20px;
+    border-radius:3px;
+    background:rgba(31,41,51,0.78);
+    border:none;
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+    cursor:pointer;
+    line-height:1;
+  }
+  .item-image-remove:hover{ background:var(--rust); border:none; }
+  .item-image-add{
+    width:84px; height:84px;
+    border-radius:4px;
+    border:1px dashed #A9B4C2;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    color:var(--paper-dim);
+    font-size:12px;
+    text-align:center;
+    line-height:1.4;
+    background:var(--panel-2);
+    flex-shrink:0;
+    transition:background .12s, border-color .12s, color .12s;
+  }
+  .item-image-add:hover{ background:var(--accent-soft); border-color:var(--steel); color:var(--steel); }
+
+  .lightbox{
+    position:fixed; inset:0;
+    background:rgba(15,23,32,0.9);
+    display:none;
+    z-index:9999;
+    padding:12px;
+    overflow:auto;
+    cursor:zoom-out;
+  }
+  .lightbox.show{ display:flex; }
+  .lightbox img{
+    width:96vw; height:90vh;
+    object-fit:contain;
+    margin:auto;
+    flex-shrink:0;
+    border-radius:4px;
+    background:#fff;
+    cursor:zoom-in;
+  }
+  .lightbox img.zoomed{
+    width:auto; height:auto;
+    min-width:150vw;
+    max-width:none; max-height:none;
+    object-fit:initial;
+    cursor:zoom-out;
+  }
+  .lightbox-close{
+    position:fixed; top:12px; right:16px;
+    width:36px; height:36px; padding:0;
+    border-radius:4px;
+    background:rgba(255,255,255,0.92);
+    color:var(--paper);
+    font-size:20px; line-height:1;
+    z-index:10000;
+  }
+
+  ::placeholder{ color:#9AA5B3; }
+
+  input:disabled, textarea:disabled, select:disabled{
+    background:var(--ink) !important;
+    color:var(--paper-dim) !important;
+    cursor:not-allowed;
+    border-color:var(--line) !important;
+  }
+  .tb-cell input:disabled, .tb-cell select:disabled{ background:transparent !important; border-color:transparent !important; }
+  .cat-name-input:disabled{ background:transparent !important; border-color:transparent !important; color:var(--paper) !important; }
+  .item-text:disabled, .item-text:disabled:hover{ background:transparent !important; border-color:transparent !important; color:var(--paper) !important; cursor:default; }
+
+
+  /* ---- Tabs ---- */
+  .tabs-wrap{
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+    margin-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .tabs{ display:flex; gap:2px; flex:1; overflow-x:auto; overflow-y:hidden; padding-top:2px; scrollbar-width:thin; }
+  .tabs::-webkit-scrollbar{ height:6px; }
+  .tabs::-webkit-scrollbar-thumb{ background:#C3CBD6; border-radius:3px; }
+  .tab{
+    flex-shrink:0;
+    max-width:220px;
+    display:inline-flex;
+    align-items:center;
+    white-space:nowrap;
+    border:1px solid var(--line);
+    border-bottom:none;
+    border-radius:6px 6px 0 0;
+    background:#E7EBF0;
+    color:var(--paper-dim);
+    padding:7px 16px;
+    margin-bottom:-1px;
+    font-size:13px;
+    font-weight:500;
+  }
+  .tab:hover{ background:#EEF1F5; color:var(--paper); border-color:var(--line); }
+  .tab.active{
+    background:var(--panel);
+    color:var(--paper);
+    font-weight:600;
+    border-top:2px solid var(--steel);
+    padding-top:6px;
+  }
+  .tab-label{ overflow:hidden; text-overflow:ellipsis; }
+  .tab-close{ margin-left:8px; padding:0 4px; font-size:15px; line-height:1.2; border-radius:3px; opacity:0; }
+  .tab:hover .tab-close, .tab.active .tab-close{ opacity:0.5; }
+  .tab .tab-close:hover{ opacity:1; color:var(--rust); background:rgba(184,50,50,0.1); }
+  .tab-edit{ margin-left:8px; flex-shrink:0; font-size:11px; opacity:0.45; }
+  .tab.active:hover .tab-edit{ opacity:0.9; color:var(--steel); }
+  .tab.active{ cursor:text; }
+  .tab-input{
+    flex-shrink:0;
+    width:180px;
+    border:1px solid var(--steel);
+    border-bottom:none;
+    border-top:2px solid var(--steel);
+    border-radius:6px 6px 0 0;
+    background:var(--panel);
+    color:var(--paper);
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:6px 12px;
+    margin-bottom:-1px;
+    outline:none;
+  }
+  .tab-add{ flex-shrink:0; margin-bottom:6px; color:var(--steel); border-color:var(--steel); }
+  .tab-add:hover{ background:var(--accent-soft); border-color:var(--steel-dim); }
+
+  /* ---- Sticky action bar ---- */
+  .appbar{
+    position:sticky;
+    top:8px;
+    z-index:50;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px 12px;
+    margin-bottom:12px;
+    box-shadow:0 2px 8px rgba(31,41,51,0.08);
+  }
+  .appbar-left, .appbar-right{ display:flex; align-items:center; gap:8px; }
+  .appbar select.review-select{ min-width:190px; max-width:260px; padding:6px 10px; }
+  .appbar-progress{ flex:1; min-width:240px; }
+  .progress-text{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:12px;
+    color:var(--paper-dim);
+    margin-bottom:5px;
+  }
+  .progress-text strong{ color:var(--paper); font-size:13px; font-variant-numeric:tabular-nums; }
+  .legend{ display:inline-flex; align-items:center; gap:5px; font-variant-numeric:tabular-nums; }
+  .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; }
+  .all-done{ color:var(--green); font-weight:600; }
+  .appbar .overall-bar{ margin:0; height:6px; }
+
+  .menu-wrap{ position:relative; }
+  .menu{
+    position:absolute;
+    right:0;
+    top:calc(100% + 6px);
+    min-width:210px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:0 8px 24px rgba(31,41,51,0.16);
+    padding:4px;
+    z-index:60;
+  }
+  .menu button{
+    display:block;
+    width:100%;
+    text-align:left;
+    border:none;
+    background:transparent;
+    padding:8px 12px;
+    border-radius:4px;
+    font-size:13px;
+  }
+  .menu button:hover{ background:#EEF1F5; }
+  .menu button.danger{ color:var(--rust); }
+  .menu hr{ border:none; border-top:1px solid var(--line); margin:4px 0; }
+
+  /* ---- Filter bar ---- */
+  .filterbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .search-box{
+    flex:0 1 280px;
+    min-width:180px;
+    padding:6px 10px;
+    border:1px solid #C3CBD6;
+    border-radius:4px;
+    background:var(--panel);
+    font-family:inherit;
+    font-size:13px;
+    color:var(--paper);
+    outline:none;
+  }
+  .search-box:focus{ border-color:var(--steel); box-shadow:0 0 0 2px var(--accent-ring); }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{ padding:4px 11px; font-size:12px; border-radius:4px; }
+  .chip .n{ margin-left:6px; opacity:0.65; font-variant-numeric:tabular-nums; }
+  .chip.active{ background:var(--steel); border-color:var(--steel); color:#fff; }
+  .chip.active:hover{ background:var(--steel-dim); border-color:var(--steel-dim); }
+  .filter-spacer{ margin-left:auto; display:flex; align-items:center; gap:6px; }
+  .count-note{ font-size:12px; color:var(--paper-dim); margin-right:6px; }
+
+  /* ---- Category header controls ---- */
+  .cat-right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+  .cat-fail{
+    font-size:11px; font-weight:600; color:var(--rust);
+    background:#FBE6E6; border-radius:3px; padding:1px 8px;
+  }
+  .cat-actions{ display:flex; align-items:center; gap:2px; }
+  .cat-actions button{ border-color:transparent; background:transparent; color:var(--paper-dim); }
+  .cat-actions button:hover{ background:#E4E9F0; border-color:transparent; color:var(--paper); }
+  .cat-actions button.danger-ghost{ color:var(--rust); }
+  .cat-actions button.danger-ghost:hover{ background:rgba(184,50,50,0.1); }
+  .cat-actions button.cat-add{ color:var(--steel); font-weight:600; }
+
+  /* ---- Item card: status at the right of the description ---- */
+  .item-head{ display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .item-head .item-text{ flex:1; width:auto; min-width:220px; }
+  .status-seg{ display:flex; flex-shrink:0; margin-top:2px; }
+  .status-seg .status-btn{ border-radius:0; margin-left:-1px; position:relative; padding:4px 12px; }
+  .status-seg .status-btn:first-child{ border-radius:4px 0 0 4px; margin-left:0; }
+  .status-seg .status-btn:last-child{ border-radius:0 4px 4px 0; }
+  .status-seg .status-btn.active{ z-index:1; }
+  .status-seg .status-btn:hover:not(.active){ background:#EEF1F5; }
+  .item-issue{
+    margin-top:10px;
+    padding:8px 12px 12px;
+    border:1px solid #E8D9B5;
+    border-left:3px solid #D9A441;
+    background:#FFFBF1;
+    border-radius:4px;
+    outline:none;
+  }
+  .item-issue:focus-within{ box-shadow:0 0 0 2px rgba(217,164,65,0.2); }
+  .item-issue > label{ display:block; font-size:11px; font-weight:600; color:#8A5A00; margin-bottom:4px; }
+  .item-issue .item-images{ margin-top:8px; }
+  .issue-open-btn{ margin-top:8px; color:var(--paper-dim); border-style:dashed; }
+  .issue-open-btn:hover{ color:var(--steel); border-color:var(--steel); }
+  .item-actions{ display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:8px; }
+  .item-row[data-status="pass"], .bulk-row[data-status="pass"]{ box-shadow:inset 3px 0 0 var(--green); }
+  .item-row[data-status="fail"], .bulk-row[data-status="fail"]{ box-shadow:inset 3px 0 0 var(--rust); }
+  .item-row[data-status="na"], .bulk-row[data-status="na"]{ box-shadow:inset 3px 0 0 #B7C0CC; }
+  .filtering .category.collapsed .category-body{ display:block; }
+
+  @media(max-width:720px){
+    .wrap{ padding:16px 12px 48px; }
+    .tb-grid{ grid-template-columns:repeat(2,1fr); }
+    .tb-cell{ border-bottom:1px solid var(--line); }
+    .item-meta{ grid-template-columns:1fr; }
+    .appbar{ top:0; }
+    .appbar-progress{ order:3; flex-basis:100%; }
+    .appbar-right{ margin-left:auto; }
+    .filter-spacer{ margin-left:0; }
+  }
+
+  /* ---- Print ---- */
+  @media print{
+    *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    body{ background:#fff; font-size:12px; }
+    .wrap{ max-width:none; padding:0; }
+    .tab-close, .tabs-wrap, .appbar, .filterbar, .signoff, .cat-actions, .item-actions, .item-reorder, .add-item-btn,
+    .item-image-add, .item-image-remove, .issue-open-btn, .save-indicator, .lightbox, .reorder-btn, .chevron,
+    #noResult{ display:none !important; }
+    .titleblock{ border:none; border-bottom:2px solid #1F3A5F; border-radius:0; }
+    .titleblock-top{ background:#fff !important; color:#1F3A5F !important; padding:0 0 8px; }
+    .titleblock-top h1{ color:#1F3A5F !important; }
+    .titleblock-top .tag{ color:#1F3A5F !important; border-color:#1F3A5F !important; }
+    .category{ border-radius:0; margin-bottom:14px; }
+    .category.collapsed .category-body{ display:block !important; }
+    .category-head{ background:#EEF1F5 !important; }
+    .item-row{ break-inside:avoid; }
+    input, textarea, select{ border-color:transparent !important; background:transparent !important; resize:none; }
+    ::placeholder{ color:transparent; }
+    .status-seg .status-btn:not(.active){ display:none; }
+    .item-meta input, .meta-textarea{ border:1px solid #D5DBE3 !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div style="text-align:center;padding:80px 0;color:var(--paper-dim);font-size:13px;">載入中...</div>
+</div>
+<div class="save-indicator" id="saveIndicator">已儲存</div>
+<input type="file" id="importFile" accept=".json" style="display:none;">
+<div class="lightbox" id="imgLightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" title="關閉">×</button>
+  <img id="imgLightboxImg" src="" alt="圖片放大檢視" onclick="this.classList.toggle('zoomed')">
+</div>
+
+<script>
+const STATUS = ['pending','pass','fail','na'];
+const STATUS_LABEL = {pending:'待審',pass:'通過',fail:'未通過',na:'不適用'};
+const CAT_COLORS = ['#1F4E8C'];
+const CAT_ICONS = [''];
+
+function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+
+const LOCAL_PREFIX = 'drc:';
+function hasClaudeStorage(){
+  return typeof window.storage !== 'undefined' && window.storage && typeof window.storage.set === 'function';
+}
+const storageAdapter = {
+  async get(key, shared){
+    if(hasClaudeStorage()){
+      try{ return await window.storage.get(key, shared); }catch(e){ /* fall through to localStorage */ }
+    }
+    const raw = localStorage.getItem(LOCAL_PREFIX+key);
+    if(raw === null) throw new Error('not found: '+key);
+    return {key, value: raw, shared: !!shared};
+  },
+  async set(key, value, shared){
+    if(hasClaudeStorage()){
+      try{ return await window.storage.set(key, value, shared); }catch(e){ /* fall through to localStorage */ }
+    }
+    localStorage.setItem(LOCAL_PREFIX+key, value);
+    return {key, value, shared: !!shared};
+  },
+  async delete(key, shared){
+    if(hasClaudeStorage()){
+      try{ return await window.storage.delete(key, shared); }catch(e){ /* fall through to localStorage */ }
+    }
+    localStorage.removeItem(LOCAL_PREFIX+key);
+    return {key, deleted:true, shared: !!shared};
+  },
+  async list(prefix, shared){
+    if(hasClaudeStorage()){
+      try{ return await window.storage.list(prefix, shared); }catch(e){ /* fall through to localStorage */ }
+    }
+    const keys = [];
+    const p = LOCAL_PREFIX + (prefix||'');
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf(p)===0) keys.push(k.slice(LOCAL_PREFIX.length));
+    }
+    return {keys, prefix, shared: !!shared};
+  }
+};
+
+function defaultCategories(){
+  return [
+    {id: uid('cat'), name:'功能性', items:[
+      {id:uid('it'), text:'已確認設計滿足規格書所有要求項目', criteria:'逐項對照規格書，無遺漏或未解釋差異', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'運動包絡與干涉檢查已完成', criteria:'3D模型全行程動作模擬無干涉', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'關鍵功能介面（連接器、卡合結構等）已驗證匹配', criteria:'對配件實測或模擬通過', evidence:'', owner:'', status:'pending'}
+    ]},
+    {id: uid('cat'), name:'結構強度', items:[
+      {id:uid('it'), text:'關鍵受力件應力分析已完成', criteria:'安全係數達規範門檻（如≥1.5）', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'疲勞／耐久評估已針對關鍵循環件執行', criteria:'預估壽命滿足規格週期數', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'材料選用符合使用環境（溫度／腐蝕／化學相容性）', criteria:'材料規格與環境條件比對通過', evidence:'', owner:'', status:'pending'}
+    ]},
+    {id: uid('cat'), name:'製造與組裝', items:[
+      {id:uid('it'), text:'關鍵尺寸公差堆疊分析已完成', criteria:'堆疊結果Cpk達目標值，附計算表', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'可製造性（DFM）審查已完成', criteria:'無需特殊夾具／工序，或已提出對應方案', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'組裝順序與工具可及性已確認', criteria:'組裝路徑模擬無死角，工具可進入', evidence:'', owner:'', status:'pending'}
+    ]},
+    {id: uid('cat'), name:'可靠性與驗證', items:[
+      {id:uid('it'), text:'失效模式已透過DFMEA盤點且高風險項有對策', criteria:'高風險項目均有對應設計改善或驗證計畫', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'對應測試計畫已建立並涵蓋所有關鍵失效模式', criteria:'測試矩陣與DFMEA項目可追溯對應', evidence:'', owner:'', status:'pending'},
+      {id:uid('it'), text:'過去同類產品Lessons Learned已檢視並納入設計考量', criteria:'逐條檢視歷史問題清單並記錄結論', evidence:'', owner:'', status:'pending'}
+    ]}
+  ];
+}
+
+function defaultReview(name){
+  const today = new Date().toISOString().slice(0,10);
+  return {
+    name: name || '新審查項目',
+    phase: 'mockup_release',
+    reviewer: '',
+    date: today,
+    revision: 'A',
+    signoffName:'',
+    signoffDate:'',
+    signoffDone:false,
+    categories: defaultCategories(),
+    brainstorm: []
+  };
+}
+
+let state = {
+  reviewsList: [],
+  activeId: null,
+  activeReview: null,
+  loaded:false,
+  viewMode: 'checklist',
+  storageOK: true,
+  hasPassword: true,
+  passwordHash: null,
+  editUnlocked: false,
+  filterStatus: 'all',
+  searchText: '',
+  menuOpen: false,
+  theme: 'navy',
+  issueOpen: {},
+  focusIssueId: null
+};
+
+let saveTimer = null;
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ saveActiveReview(); }, 600);
+}
+
+function simpleHash(str){
+  let hash = 5381;
+  for(let i=0;i<str.length;i++){
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return String(hash);
+}
+
+// ---- 鎖定密碼（固定密碼，有效期限制）----
+const THEMES = [
+  ['navy','深藍（預設）','#1F3A5F'],
+  ['light','淺色表頭','#F7F8FA'],
+  ['graphite','石墨灰','#2B3440'],
+  ['teal','青藍綠','#134E4A'],
+  ['forest','森林綠','#1F4A33'],
+  ['bronze','暖棕','#4A3B28']
+];
+function applyTheme(key){
+  const valid = THEMES.some(t=>t[0]===key);
+  const k = valid ? key : 'navy';
+  if(k === 'navy') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', k);
+  state.theme = k;
+}
+async function setTheme(key){
+  applyTheme(key);
+  try{ await storageAdapter.set('app:theme', key, false); }catch(e){ /* ignore */ }
+}
+
+const LOCK_PASSWORD_HASH = '217406711';
+const LOCK_EXPIRY_LABEL = '2027/6/30';
+const LOCK_EXPIRY = new Date(2027, 5, 30, 23, 59, 59, 999);
+
+function normalizePassword(str){
+  return String(str).replace(/[\s\u3000]+/g,'').toUpperCase();
+}
+function isPasswordExpired(){
+  return new Date() > LOCK_EXPIRY;
+}
+
+async function handleLockToggle(){
+  if(state.editUnlocked){
+    state.editUnlocked = false;
+    state.viewMode = 'checklist';
+    render();
+    return;
+  }
+  if(isPasswordExpired()){
+    alert('此密碼已於 '+LOCK_EXPIRY_LABEL+' 到期，無法解鎖。\n請向管理者取得新版本。');
+    return;
+  }
+  const pw = prompt('輸入密碼以解鎖編輯：\n（密碼有效期至 '+LOCK_EXPIRY_LABEL+'）');
+  if(pw===null) return;
+  if(simpleHash(normalizePassword(pw)) === LOCK_PASSWORD_HASH){
+    state.editUnlocked = true;
+    render();
+  } else {
+    alert('密碼錯誤。');
+  }
+}
+
+function showSaved(ok, msg){
+  const el = document.getElementById('saveIndicator');
+  el.textContent = ok===false ? (msg || '儲存失敗') : '已儲存';
+  el.classList.remove('error');
+  if(ok===false) el.classList.add('error');
+  el.classList.add('show');
+  clearTimeout(showSaved._t);
+  showSaved._t = setTimeout(()=>el.classList.remove('show'), ok===false ? 4000 : 900);
+}
+
+async function saveMeta(){
+  try{
+    await storageAdapter.set('meta:reviews', JSON.stringify(state.reviewsList), false);
+  }catch(e){
+    console.error('save meta failed', e);
+    showSaved(false, '儲存失敗，請改用「匯出備份」保存資料');
+    state.storageOK = false;
+  }
+}
+
+async function saveActiveReview(){
+  if(!state.activeId) return;
+  try{
+    await storageAdapter.set('review:'+state.activeId, JSON.stringify(state.activeReview), false);
+    await storageAdapter.set('active-review', state.activeId, false);
+    showSaved(true);
+  }catch(e){
+    console.error('save review failed', e);
+    showSaved(false, '儲存失敗，請改用「匯出備份」保存資料');
+    state.storageOK = false;
+  }
+}
+
+async function loadAll(){
+  try{
+    const testKey = '__storage_check__';
+    await storageAdapter.set(testKey, '1', false);
+    await storageAdapter.get(testKey, false);
+    await storageAdapter.delete(testKey, false);
+    state.storageOK = true;
+  }catch(e){
+    console.error('storage check failed', e);
+    state.storageOK = false;
+  }
+
+  state.hasPassword = true;
+  state.editUnlocked = false;
+  try{
+    const th = await storageAdapter.get('app:theme', false);
+    applyTheme(th.value);
+  }catch(e){ applyTheme('navy'); }
+
+  try{
+    const metaRes = await storageAdapter.get('meta:reviews', false);
+    state.reviewsList = metaRes ? JSON.parse(metaRes.value) : [];
+  }catch(e){
+    state.reviewsList = [];
+  }
+  let activeId = null;
+  try{
+    const a = await storageAdapter.get('active-review', false);
+    activeId = a ? a.value : null;
+  }catch(e){}
+
+  await syncMetaReviewers();
+
+  if(state.reviewsList.length === 0){
+    await createNewReview('概念設計審查 - 範例');
+    return;
+  }
+
+  if(!activeId || !state.reviewsList.find(r=>r.id===activeId)){
+    activeId = state.reviewsList[0].id;
+  }
+  await loadReview(activeId);
+}
+
+async function loadReview(id){
+  try{
+    const res = await storageAdapter.get('review:'+id, false);
+    if(res){
+      state.activeReview = JSON.parse(res.value);
+      if(!Array.isArray(state.activeReview.brainstorm)) state.activeReview.brainstorm = [];
+      state.activeId = id;
+      let changed = false;
+      if(!state.activeReview._templatesChecked){
+        changed = ensureTemplateCategories(state.activeReview);
+      }
+      if(await migrateReviewImages(state.activeReview)) changed = true;
+      await storageAdapter.set('active-review', id, false);
+      render();
+      if(changed) await saveActiveReview();
+      return;
+    }
+  }catch(e){ console.error('load review failed', e); }
+  state.activeReview = defaultReview();
+  ensureTemplateCategories(state.activeReview);
+  state.activeId = id;
+  render();
+}
+
+async function createNewReview(name){
+  const id = uid('rev');
+  const review = defaultReview(name || ('新審查項目'));
+  ensureTemplateCategories(review);
+  state.reviewsList.push({id, name: review.name, reviewer: review.reviewer || ''});
+  state.activeId = id;
+  state.activeReview = review;
+  await saveMeta();
+  await saveActiveReview();
+  render();
+}
+
+function tabLabel(item){
+  return ((item.reviewer && item.reviewer.trim()) || item.name || '未命名');
+}
+
+async function syncMetaReviewers(){
+  let changed = false;
+  for(const m of state.reviewsList){
+    if(typeof m.reviewer === 'undefined'){
+      try{
+        const rr = await storageAdapter.get('review:' + m.id, false);
+        m.reviewer = (JSON.parse(rr.value).reviewer) || '';
+      }catch(e){ m.reviewer = ''; }
+      changed = true;
+    }
+  }
+  if(changed) await saveMeta();
+}
+
+function startTabRename(btn, item){
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'tab-input';
+  input.value = item.reviewer || '';
+  input.placeholder = '審查人姓名';
+  btn.replaceWith(input);
+  input.focus();
+  input.select();
+  let done = false;
+  const commit = (save)=>{
+    if(done) return;
+    done = true;
+    const v = input.value.trim();
+    if(save && v && v !== item.reviewer){
+      item.reviewer = v;
+      if(state.activeReview && item.id === state.activeId) state.activeReview.reviewer = v;
+      saveMeta();
+      saveActiveReview();
+    }
+    render();
+  };
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); commit(true); }
+    else if(e.key === 'Escape'){ commit(false); }
+  });
+  input.addEventListener('blur', ()=>commit(true));
+  input.addEventListener('click', (e)=>e.stopPropagation());
+}
+
+async function duplicateReview(){
+  const src = state.activeReview;
+  if(!src) return;
+  const defName = (src.reviewer || src.name || '審查') + ' (複本)';
+  const nameInput = prompt('新分頁的審查人姓名：', defName);
+  if(nameInput === null) return;
+  const nm = nameInput.trim() || defName;
+  const fresh = confirm('要讓新分頁重新填寫嗎？\n\n按「確定」：狀態改回「待審」、備註與 Issue 清空（其他內容與圖片完整複製）\n按「取消」：連同目前的狀態與備註一起完整複製');
+  clearTimeout(saveTimer);
+  await saveActiveReview();
+  const copy = JSON.parse(JSON.stringify(src));
+  for(const c of (copy.categories || [])){
+    for(const it of (c.items || [])){
+      if(fresh){ it.issue = ''; it.issueImages = []; }
+      for(const field of IMAGE_FIELDS){
+        if(!Array.isArray(it[field])) continue;
+        const out = [];
+        for(const ref of it[field]){
+          if(isIdbRef(ref)){
+            try{
+              const blob = await idbGet(ref.slice(4));
+              if(blob){
+                const nid = uid('img');
+                await idbPut(nid, blob);
+                out.push('idb:' + nid);
+              }
+            }catch(e){ console.warn('copy image failed', e); }
+          } else out.push(ref);
+        }
+        it[field] = out;
+      }
+      if(fresh){ it.status = 'pending'; it.evidence = ''; }
+      delete it._focus;
+    }
+  }
+  copy.reviewer = nm;
+  copy.date = new Date().toISOString().slice(0,10);
+  const id = uid('rev');
+  state.reviewsList.push({id, name: copy.name, reviewer: nm});
+  state.activeId = id;
+  state.activeReview = copy;
+  await saveMeta();
+  await saveActiveReview();
+  render();
+}
+
+function verifyPasswordOnce(){
+  if(isPasswordExpired()){
+    alert('此密碼已於 '+LOCK_EXPIRY_LABEL+' 到期，無法執行此操作。\n請向管理者取得新版本。');
+    return false;
+  }
+  const pw = prompt('此操作需要輸入密碼：');
+  if(pw === null) return false;
+  if(simpleHash(normalizePassword(pw)) === LOCK_PASSWORD_HASH) return true;
+  alert('密碼錯誤。');
+  return false;
+}
+
+async function purgeReviewImages(id){
+  try{
+    let rv = null;
+    if(id === state.activeId && state.activeReview) rv = state.activeReview;
+    else {
+      const res = await storageAdapter.get('review:'+id, false);
+      rv = JSON.parse(res.value);
+    }
+    for(const c of (rv.categories || [])){
+      for(const it of (c.items || [])){
+        for(const field of IMAGE_FIELDS){
+          (Array.isArray(it[field]) ? it[field] : []).forEach(ref=>removeImageRef(ref));
+        }
+      }
+    }
+  }catch(e){ /* nothing to clean */ }
+}
+
+async function deleteReview(id){
+  const wasActive = (id === state.activeId);
+  const idx = state.reviewsList.findIndex(r=>r.id===id);
+  await purgeReviewImages(id);
+  try{ await storageAdapter.delete('review:'+id, false); }catch(e){}
+  state.reviewsList = state.reviewsList.filter(r=>r.id!==id);
+  await saveMeta();
+  if(state.reviewsList.length===0){
+    await createNewReview();
+  } else if(wasActive){
+    const next = state.reviewsList[Math.min(idx, state.reviewsList.length-1)];
+    await loadReview(next.id);
+  } else {
+    render();
+  }
+}
+
+async function requestDeleteTab(item){
+  const label = tabLabel(item);
+  const lockedNow = state.hasPassword && !state.editUnlocked;
+  if(lockedNow && !verifyPasswordOnce()) return;
+  const last = state.reviewsList.length === 1;
+  const msg = '確定要刪除「'+label+'」這個分頁嗎？\n分頁內的所有內容與圖片都會被刪除，此動作無法復原。' + (last ? '\n（這是最後一個分頁，刪除後會自動建立一個空白審查。）' : '');
+  if(!confirm(msg)) return;
+  clearTimeout(saveTimer);
+  if(item.id !== state.activeId) await saveActiveReview();
+  await deleteReview(item.id);
+}
+
+function countStatus(review){
+  let total=0, pass=0, fail=0, pending=0, na=0;
+  review.categories.forEach(c=>c.items.forEach(it=>{
+    total++;
+    if(it.status==='pass') pass++;
+    else if(it.status==='fail') fail++;
+    else if(it.status==='na') na++;
+    else pending++;
+  }));
+  return {total,pass,fail,pending,na};
+}
+
+function catCountStatus(cat){
+  let total=cat.items.length, done=0;
+  cat.items.forEach(it=>{ if(it.status!=='pending') done++; });
+  return {total, done};
+}
+
+function renderBrainstorm(app, r){
+  app.appendChild(el('div',{class:'brainstorm-hint'},[
+    '先把可能造成設計問題的分類（骨頭）列出來，每個分類下寫幾條具體疑慮或失效模式（不用完整、不用嚴謹），想到什麼就記什麼。列完後按下方「轉換為Checklist分類」，會自動生成對應分類與項目，之後再回Checklist模式逐項填上通過基準與證據。'
+  ]));
+
+  r.brainstorm.forEach((bone, boneIdx)=>{
+    const card = el('div',{class:'bone-card'});
+    const head = el('div',{class:'bone-head'},[
+      el('span',{class:'bone-num'},[String(boneIdx+1)]),
+    ]);
+    const nameInput = el('input',{class:'bone-name-input', type:'text', placeholder:'分類名稱（例：安規／EMC）', value:bone.name, oninput:(e)=>{ bone.name=e.target.value; scheduleSave(); }, onblur:()=>saveActiveReview()});
+    head.appendChild(nameInput);
+    head.appendChild(el('button',{class:'small danger-ghost', onclick:()=>{ r.brainstorm.splice(boneIdx,1); saveActiveReview(); render(); }},['刪除']));
+    card.appendChild(head);
+
+    const body = el('div',{class:'bone-body'});
+    bone.points.forEach((pt, ptIdx)=>{
+      const row = el('div',{class:'point-row'});
+      row.appendChild(el('span',{class:'point-dash'},['—']));
+      const input = el('input',{class:'point-input', type:'text', placeholder:'可能的疑慮或失效模式', value:pt.text, oninput:(e)=>{ pt.text=e.target.value; scheduleSave(); }, onblur:()=>saveActiveReview()});
+      row.appendChild(input);
+      row.appendChild(el('button',{class:'small danger-ghost', onclick:()=>{ bone.points.splice(ptIdx,1); saveActiveReview(); render(); }},['×']));
+      body.appendChild(row);
+    });
+    body.appendChild(el('button',{class:'small add-point-btn', onclick:()=>{
+      bone.points.push({id:uid('pt'), text:''});
+      saveActiveReview(); render();
+    }},['+ 新增一條']));
+    card.appendChild(body);
+    app.appendChild(card);
+  });
+
+  app.appendChild(el('div',{class:'add-bone-row'},[
+    el('button',{onclick:()=>{
+      r.brainstorm.push({id:uid('bone'), name:'', points:[{id:uid('pt'), text:''}]});
+      saveActiveReview(); render();
+    }},['+ 新增骨頭（分類）'])
+  ]));
+
+  const convertRow = el('div',{class:'convert-row'});
+  convertRow.appendChild(el('button',{class:'primary', onclick:()=>{
+    const valid = r.brainstorm.filter(b=>b.name && b.name.trim());
+    if(valid.length===0){ alert('請先至少填寫一個分類名稱。'); return; }
+    if(!confirm('將新增 '+valid.length+' 個分類到Checklist中（不會覆蓋現有分類），確定嗎？')) return;
+    valid.forEach(bone=>{
+      const items = bone.points.filter(p=>p.text && p.text.trim()).map(p=>({
+        id:uid('it'), text:p.text.trim(), criteria:'', evidence:'', owner:'', status:'pending'
+      }));
+      r.categories.push({id:uid('cat'), name:bone.name.trim(), items});
+    });
+    state.viewMode = 'checklist';
+    saveActiveReview();
+    render();
+  }},['轉換為Checklist分類並加入 →']));
+  convertRow.appendChild(el('span',{class:'convert-note'},['會依每根骨頭新增一個分類，細項會帶入但通過基準/證據留空待補']));
+  app.appendChild(convertRow);
+}
+
+function generalDefinitionsTemplate(){
+  const rows = [
+    ['外觀定義','Rev.00','11/25 OK','pass'],
+    ['前框、後殼平均肉厚定義','Rev.00','11/25 OK','pass'],
+    ['塑膠顏色定義','Rev.00','–','pending'],
+    ['常用塑料材質型號','Rev.00','12/26 OK','pass'],
+    ['塑膠防火等級選用','Rev.01','20200513 已更新','pass'],
+    ['塑膠長度公差-係數定義表','Rev.00','11/25 OK','pass'],
+    ['機台使用噸數','Rev.00','11/25 OK','pass'],
+    ['VESA Spec 定義','Rev.00','12/1 OK','pass'],
+    ['安全距離定義','Rev.00','12/25 已增加','pass'],
+    ['卡勾尺寸定義','Rev.00','OK','pass'],
+    ['Mylar / Sponge / 醋酸布 / 不織布 公差表','Rev.00','OK','pass'],
+    ['鈑金件公差','Rev.00','OK','pass'],
+    ['VHB tape 定義','Rev.00','11/28 已完成','pass'],
+    ['Sealing Foam 定義','Rev.00','11/28 已完成','pass'],
+    ['IP防護標準定義','Rev.00','11/28 已完成','pass'],
+    ['模具材料定義','Rev.00','11/28 已完成','pass'],
+    ['螺絲選用定義','Rev.00','12/30','pass'],
+    ['安規標籤定義','Rev.00','11/26 OK','pass'],
+    ['玻璃吊掛試驗','Rev.00','–','pending'],
+    ['Kiosk – EPDM 防塵條','Rev.00','11/26 OK','pass'],
+    ['落球規範','Rev.00','–','pending']
+  ];
+  return {
+    id: uid('cat'),
+    name: '一般定義',
+    fieldLabels: {criteria:'規範', evidence:'備註'},
+    items: rows.map(([text,rev,note,status])=>({
+      id: uid('it'), text, criteria: rev, evidence: note, owner:'', status
+    }))
+  };
+}
+
+function assemblyStructuralTemplate(){
+  const rows = [
+    ['TDM固定方式確認，是否符合吊重測試需求','吊重測試結果達規格載重，無滑脫或永久變形','吊重測試報告'],
+    ['組裝方式、組裝順序是否合理','組裝流程圖已產出，無需拆裝其他件才能完成組裝','組裝流程圖 / DFA檢討紀錄'],
+    ['Cable理線與固定方式','走線路徑不干涉活動件，固定點間距符合線材supplier建議','理線3D模型截圖 / 固定點清單'],
+    ['各零件間是否有足夠空間，是否已考慮整機組裝公差與重要路徑公差分析','公差堆疊後最小間隙仍大於安全裕度（如≥0.3mm）','公差堆疊計算表'],
+    ['防水設計是否符合IP等級要求（如IP54／IP67）對應的結構密封設計','密封結構通過對應IP等級之淋雨／浸水測試','IP測試報告'],
+    ['設計是否符合測試需求','測試治具可順利安裝且量測點可及','測試計畫書 / 治具相容性確認紀錄'],
+    ['材料選用確認','材料規格符合使用環境（溫度／UV／化學相容性）要求','材料規格書'],
+    ['使用通用庫Screw，螺絲鎖付空間、工具空間是否足夠','優先採用公司標準庫螺絲，工具可在鎖付角度內操作無干涉','螺絲清單（BOM） / 工具可及性模擬截圖'],
+    ['壁厚、倒角、拔模角是否符合製程要求（塑膠、壓鑄、沖壓）','壁厚／拔模角符合對應製程設計準則（如塑膠拔模角≥1°）','DFM審查紀錄'],
+    ['組裝間隙與干涉檢查','3D模型全行程動作模擬無干涉','干涉檢查報告'],
+    ['各零件製程可行性（塑膠射出、CNC、壓鑄、沖壓、折彎、焊接）','供應商確認可量產，無特殊夾具或高風險工序','供應商DFM回覆 / 可行性評估紀錄'],
+    ['EMI、ESD遮罩、導電泡棉、接地設計是否完整','EMI／ESD測試通過對應標準（如CISPR32）','EMI／ESD測試報告'],
+    ['Connector位置確認，附近是否有螺絲固定，plug與殼體間gap確認','Plug／Jack對位公差在允許範圍內，插拔力符合規格','對位公差計算 / 插拔力測試紀錄']
+  ];
+  return {
+    id: uid('cat'),
+    name: '組裝與結構綜合檢查',
+    items: rows.map(([text,criteria,evidence])=>({id:uid('it'), text, criteria, evidence, owner:'', status:'pending'}))
+  };
+}
+
+function moldEvaluationTemplate(){
+  const rows = [
+    ['表面外觀處理要求評估','表面處理方式（烤漆／電鍍／噴砂等）已確認可行且符合外觀等級要求','外觀樣品 / 供應商工藝確認書'],
+    ['模具結構評估（模具形式、出模、滑塊、斜銷、強度等）','模具流程確認可順利出模，無倒扣未處理','模具流程圖 / 模具供應商確認紀錄'],
+    ['Parting line分析','Parting line位置不影響外觀面且已標註於圖面','Parting line標註圖'],
+    ['內厚評估','內厚均勻，符合材料流動與縮水率要求，無厚薄比過大區域','內厚分析報告 / 流動模擬結果'],
+    ['拔模角評估','拔模角依模穴深度符合建議值（一般≥1°，深穴另評估）','拔模角標註圖'],
+    ['變形度評估','模流分析預估變形量在允收公差內','模流分析（Moldflow）報告'],
+    ['成型方式評估（成型難點、特殊工藝等）','特殊工藝（如雙料成型、嵌件成型）已與供應商確認可行','成型工藝確認紀錄']
+  ];
+  return {
+    id: uid('cat'),
+    name: '模具與成型評估',
+    items: rows.map(([text,criteria,evidence])=>({id:uid('it'), text, criteria, evidence, owner:'', status:'pending'}))
+  };
+}
+
+function thermalClearanceTemplate(){
+  const rows = [
+    ['Tpad接觸面相對高度','高度差在Tpad可壓縮公差範圍內，確保接觸良好','確保Tpad厚度符合設計'],
+    ['Standoff高度','Standoff高度公差堆疊後仍符合PCB與殼體間隙需求',''],
+    ['Thermal parts區域限高','限高區域內無其他零件侵入，留有安全餘量','避免零件干涉Thermal parts'],
+    ['風扇位置確認','風扇進排風路徑無阻擋，符合散熱氣流設計',''],
+    ['風扇線長、出線確認','線長含裕量且不干涉活動件／組裝路徑','確認線長足夠'],
+    ['開孔尺寸區域','開孔尺寸符合風量需求且不影響結構強度／防塵防水','']
+  ];
+  return {
+    id: uid('cat'),
+    name: '散熱與機構間隙評估',
+    fieldLabels: {criteria:'補充說明', evidence:'Remark / 備註'},
+    items: rows.map(([text,criteria,remark])=>({id:uid('it'), text, criteria, evidence:remark, owner:'', status:'pending'}))
+  };
+}
+
+const TEMPLATE_REGISTRY = {
+  general: {label:'一般定義（21項）', fn: generalDefinitionsTemplate},
+  assembly: {label:'組裝與結構綜合檢查（13項）', fn: assemblyStructuralTemplate},
+  mold: {label:'模具與成型評估（7項）', fn: moldEvaluationTemplate},
+  thermal: {label:'散熱與機構間隙評估（6項）', fn: thermalClearanceTemplate}
+};
+
+function ensureTemplateCategories(review){
+  if(!Array.isArray(review.categories)) review.categories = [];
+  let changed = false;
+  Object.values(TEMPLATE_REGISTRY).forEach(tpl=>{
+    const sample = tpl.fn();
+    const existingCat = review.categories.find(c=>c.name === sample.name);
+    if(!existingCat){
+      review.categories.push(sample);
+      changed = true;
+      return;
+    }
+    const sampleByText = {};
+    sample.items.forEach(si=>{ sampleByText[si.text] = si; });
+    existingCat.items.forEach(it=>{
+      const si = sampleByText[it.text];
+      if(!si) return;
+      if((!it.criteria || !it.criteria.trim()) && si.criteria){ it.criteria = si.criteria; changed = true; }
+      if((!it.evidence || !it.evidence.trim()) && si.evidence){ it.evidence = si.evidence; changed = true; }
+    });
+    if(sample.fieldLabels){
+      const merged = Object.assign({}, existingCat.fieldLabels||{}, sample.fieldLabels);
+      if(JSON.stringify(merged) !== JSON.stringify(existingCat.fieldLabels||{})){
+        existingCat.fieldLabels = merged;
+        changed = true;
+      }
+    }
+  });
+  review._templatesChecked = true;
+  return changed;
+}
+
+// ---- Image store (IndexedDB): 圖片以原始解析度存放，不塞進審查資料本體 ----
+const IMG_DB_NAME = 'drc-images';
+const IMG_STORE = 'images';
+let imgDBPromise = null;
+const imgUrlCache = {};
+
+function openImgDB(){
+  if(imgDBPromise) return imgDBPromise;
+  imgDBPromise = new Promise((resolve, reject)=>{
+    if(typeof indexedDB === 'undefined'){ reject(new Error('IndexedDB not available')); return; }
+    const req = indexedDB.open(IMG_DB_NAME, 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore(IMG_STORE); };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+  imgDBPromise.catch(()=>{ imgDBPromise = null; });
+  return imgDBPromise;
+}
+async function idbPut(id, blob){
+  const db = await openImgDB();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction(IMG_STORE, 'readwrite');
+    tx.objectStore(IMG_STORE).put(blob, id);
+    tx.oncomplete = ()=>res();
+    tx.onerror = ()=>rej(tx.error);
+    tx.onabort = ()=>rej(tx.error);
+  });
+}
+async function idbGet(id){
+  const db = await openImgDB();
+  return new Promise((res, rej)=>{
+    const req = db.transaction(IMG_STORE, 'readonly').objectStore(IMG_STORE).get(id);
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = ()=>rej(req.error);
+  });
+}
+async function idbDelete(id){
+  const db = await openImgDB();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction(IMG_STORE, 'readwrite');
+    tx.objectStore(IMG_STORE).delete(id);
+    tx.oncomplete = ()=>res();
+    tx.onerror = ()=>rej(tx.error);
+  });
+}
+function isIdbRef(s){ return typeof s === 'string' && s.indexOf('idb:') === 0; }
+function blobToDataURL(blob){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+function dataURLToBlob(u){
+  const parts = u.split(',');
+  const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+  const bin = atob(parts[1]);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], {type: mime});
+}
+async function resolveImageRef(ref){
+  if(!isIdbRef(ref)) return ref;
+  if(imgUrlCache[ref]) return imgUrlCache[ref];
+  const blob = await idbGet(ref.slice(4));
+  if(!blob) return '';
+  const url = URL.createObjectURL(blob);
+  imgUrlCache[ref] = url;
+  return url;
+}
+function bindImgSrc(imgEl, ref){
+  if(!isIdbRef(ref)){ imgEl.src = ref; return; }
+  if(imgUrlCache[ref]){ imgEl.src = imgUrlCache[ref]; return; }
+  resolveImageRef(ref).then(u=>{ if(u) imgEl.src = u; }).catch(()=>{});
+}
+function removeImageRef(ref){
+  if(!isIdbRef(ref)) return;
+  idbDelete(ref.slice(4)).catch(()=>{});
+  if(imgUrlCache[ref]){ URL.revokeObjectURL(imgUrlCache[ref]); delete imgUrlCache[ref]; }
+}
+async function prepareImageBlob(file){
+  // 6MB 以內直接存原檔(不重新壓縮，保留完整解析度)；超過才縮到長邊3200px、高畫質JPEG
+  if(file.size <= 6 * 1024 * 1024) return file;
+  const dataUrl = await compressImage(file, 3200, 0.92);
+  return dataURLToBlob(dataUrl);
+}
+const IMAGE_FIELDS = ['images', 'issueImages'];
+
+async function addImageToItem(it, file, field){
+  field = field || 'images';
+  if(!Array.isArray(it[field])) it[field] = [];
+  try{
+    const blob = await prepareImageBlob(file);
+    const id = uid('img');
+    await idbPut(id, blob);
+    it[field].push('idb:' + id);
+  }catch(err){
+    console.warn('IndexedDB unavailable, falling back to inline image', err);
+    const dataUrl = await compressImage(file, 2200, 0.88);
+    it[field].push(dataUrl);
+  }
+  saveActiveReview(); render();
+}
+
+function buildImageGallery(it, field, canEdit, hint){
+  if(!Array.isArray(it[field])) it[field] = [];
+  const arr = it[field];
+  const wrap = el('div',{class:'item-images'});
+  arr.forEach((src, imgIdx)=>{
+    const thumb = el('div',{class:'item-image-thumb'});
+    const thumbImg = el('img',{onclick:()=>openLightbox(src)});
+    bindImgSrc(thumbImg, src);
+    thumb.appendChild(thumbImg);
+    if(canEdit){
+      thumb.appendChild(el('button',{class:'item-image-remove', title:'刪除圖片', onclick:(e)=>{
+        e.stopPropagation();
+        removeImageRef(src);
+        arr.splice(imgIdx,1);
+        saveActiveReview(); render();
+      }},['×']));
+    }
+    wrap.appendChild(thumb);
+  });
+  if(canEdit){
+    const fileInput = el('input',{type:'file', accept:'image/*', style:'display:none;', onchange:async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        await addImageToItem(it, file, field);
+      }catch(err){
+        console.error('image compress failed', err);
+        alert('圖片處理失敗，請換一張試試。');
+      }
+      e.target.value = '';
+    }});
+    wrap.appendChild(el('div',{class:'item-image-add', title:hint, onclick:()=>fileInput.click()},['+ 新增圖片']));
+    wrap.appendChild(fileInput);
+  }
+  return wrap;
+}
+
+async function migrateReviewImages(review){
+  let changed = false;
+  for(const c of (review.categories || [])){
+    for(const it of (c.items || [])){
+      for(const field of IMAGE_FIELDS){
+        if(!Array.isArray(it[field])) continue;
+        for(let i=0;i<it[field].length;i++){
+          const ref = it[field][i];
+          if(typeof ref === 'string' && ref.indexOf('data:') === 0){
+            try{
+              const id = uid('img');
+              await idbPut(id, dataURLToBlob(ref));
+              it[field][i] = 'idb:' + id;
+              changed = true;
+            }catch(e){ return changed; }
+          }
+        }
+      }
+    }
+  }
+  return changed;
+}
+
+async function exportBackup(review){
+  try{
+    const copy = JSON.parse(JSON.stringify(review));
+    for(const c of (copy.categories || [])){
+      for(const it of (c.items || [])){
+        for(const field of IMAGE_FIELDS){
+          if(!Array.isArray(it[field])) continue;
+          const out = [];
+          for(const ref of it[field]){
+            if(isIdbRef(ref)){
+              try{
+                const blob = await idbGet(ref.slice(4));
+                if(blob) out.push(await blobToDataURL(blob));
+              }catch(e){ /* skip missing image */ }
+            } else out.push(ref);
+          }
+          it[field] = out;
+        }
+      }
+    }
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      reviewsList: state.reviewsList,
+      review: copy
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (review.name || '審查項目').replace(/[\\/:*?"<>|]/g,'_');
+    a.href = url;
+    a.download = safeName + '_備份.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(e){
+    console.error('export failed', e);
+    alert('匯出失敗，請稍後再試一次。');
+  }
+}
+
+async function importBackup(file){
+  try{
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    const review = payload.review || payload;
+    if(!review || !Array.isArray(review.categories)){
+      alert('這個檔案的格式看起來不對，無法匯入。');
+      return;
+    }
+    const id = uid('rev');
+    if(!Array.isArray(review.brainstorm)) review.brainstorm = [];
+    await migrateReviewImages(review);
+    state.reviewsList.push({id, name: (review.name||'匯入的審查') + '（匯入）', reviewer: review.reviewer || ''});
+    review.name = (review.name||'匯入的審查') + '（匯入）';
+    state.activeId = id;
+    state.activeReview = review;
+    await saveMeta();
+    await saveActiveReview();
+    render();
+    alert('匯入成功！');
+  }catch(e){
+    console.error('import failed', e);
+    alert('匯入失敗，請確認檔案是否為本系統匯出的備份檔。');
+  }
+}
+
+async function handleItemPaste(e, it){
+  if(!e.clipboardData || !e.clipboardData.items) return;
+  const items = Array.from(e.clipboardData.items);
+  const imageItem = items.find(i=>i.type && i.type.indexOf('image/')===0);
+  if(!imageItem) return;
+  const inIssue = !!(e.target && e.target.closest && e.target.closest('.item-issue'));
+  const field = inIssue ? 'issueImages' : 'images';
+  const lockedNow = state.hasPassword && !state.editUnlocked;
+  if(field === 'images' && lockedNow) return;
+  e.preventDefault();
+  const file = imageItem.getAsFile();
+  if(!file) return;
+  try{
+    await addImageToItem(it, file, field);
+  }catch(err){
+    console.error('paste image failed', err);
+    alert('貼上圖片失敗，請改用「+ 新增圖片」按鈕試試。');
+  }
+}
+
+function compressImage(file, maxDim, quality){
+  maxDim = maxDim || 1800; quality = quality || 0.85;
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function openLightbox(ref){
+  const lb = document.getElementById('imgLightbox');
+  const img = document.getElementById('imgLightboxImg');
+  if(!lb || !img) return;
+  img.removeAttribute('src');
+  img.classList.remove('zoomed');
+  lb.scrollTop = 0; lb.scrollLeft = 0;
+  lb.classList.add('show');
+  try{
+    const url = await resolveImageRef(ref);
+    if(url) img.src = url;
+  }catch(e){ console.error('open image failed', e); }
+}
+
+function closeLightbox(){
+  const lb = document.getElementById('imgLightbox');
+  if(lb) lb.classList.remove('show');
+}
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeLightbox(); });
+
+function el(tag, attrs, children){
+  const e = document.createElement(tag);
+  if(attrs) Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') e.className=v;
+    else if(k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else if(v!==undefined && v!==null) e.setAttribute(k,v);
+  });
+  (children||[]).forEach(c=>{
+    if(typeof c === 'string') e.appendChild(document.createTextNode(c));
+    else if(c) e.appendChild(c);
+  });
+  return e;
+}
+
+function itemMatchesFilter(it){
+  if(state.filterStatus === 'issue'){
+    if(!((it.issue && it.issue.trim()) || (Array.isArray(it.issueImages) && it.issueImages.length))) return false;
+  } else if(state.filterStatus !== 'all' && it.status !== state.filterStatus) return false;
+  const q = (state.searchText || '').trim().toLowerCase();
+  if(q){
+    const hay = ((it.text||'') + ' ' + (it.criteria||'') + ' ' + (it.evidence||'') + ' ' + (it.issue||'')).toLowerCase();
+    if(hay.indexOf(q) === -1) return false;
+  }
+  return true;
+}
+
+function resizeVisibleTextareas(){
+  document.querySelectorAll('.item-text, .meta-textarea').forEach(t=>{
+    if(t.offsetParent === null) return;
+    t.style.height = 'auto';
+    t.style.height = t.scrollHeight + 'px';
+  });
+}
+
+function applyFilters(){
+  const r = state.activeReview;
+  const app = document.getElementById('app');
+  if(!r || !app) return;
+  const filtering = state.filterStatus !== 'all' || (state.searchText || '').trim() !== '';
+  app.classList.toggle('filtering', filtering);
+  const byId = {};
+  r.categories.forEach(c=>c.items.forEach(it=>{ byId[it.id] = it; }));
+  let visibleTotal = 0;
+  document.querySelectorAll('.category').forEach(catEl=>{
+    let vis = 0;
+    catEl.querySelectorAll('[data-iid]').forEach(row=>{
+      const it = byId[row.getAttribute('data-iid')];
+      const show = !it || itemMatchesFilter(it);
+      row.style.display = show ? '' : 'none';
+      if(show) vis++;
+    });
+    catEl.style.display = (filtering && vis === 0) ? 'none' : '';
+    visibleTotal += vis;
+  });
+  const none = document.getElementById('noResult');
+  if(none) none.style.display = (filtering && visibleTotal === 0) ? 'block' : 'none';
+  resizeVisibleTextareas();
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.classList.remove('filtering');
+
+  if(!state.activeReview){
+    app.appendChild(el('div',{class:'empty-state'},[
+      el('p',{},['尚無審查項目']),
+    ]));
+    return;
+  }
+  const r = state.activeReview;
+  const stats = countStatus(r);
+  const locked = state.hasPassword && !state.editUnlocked;
+
+
+  // title block
+  const tabsEl = el('div',{class:'tabs'});
+  state.reviewsList.forEach(item=>{
+    const isActive = item.id===state.activeId;
+    const kids = [el('span',{class:'tab-label'},[tabLabel(item)])];
+    if(isActive) kids.push(el('span',{class:'tab-edit'},['✎']));
+    kids.push(el('span',{class:'tab-close', role:'button', title:'刪除此分頁', onclick:(e)=>{ e.stopPropagation(); requestDeleteTab(item); }},['×']));
+    tabsEl.appendChild(el('button',{class:'tab'+(isActive?' active':''), title: isActive ? '點擊可修改審查人' : tabLabel(item), onclick:async (e)=>{
+      if(isActive){
+        startTabRename(e.currentTarget, item);
+        return;
+      }
+      clearTimeout(saveTimer);
+      await saveActiveReview();
+      await loadReview(item.id);
+    }},kids));
+  });
+  app.appendChild(el('div',{class:'tabs-wrap'},[
+    tabsEl,
+    el('button',{class:'small tab-add', title:'複製目前這個分頁的全部內容，給另一位審查人填寫', onclick:duplicateReview},['＋ 複製此分頁'])
+  ]));
+
+  const tb = el('div',{class:'titleblock'});
+  const tbTop = el('div',{class:'titleblock-top'},[
+    el('h1',{},['機構設計審查系統']),
+    el('span',{class:'tag'},['REV '+ (r.revision||'A')])
+  ]);
+  tb.appendChild(tbTop);
+  const grid = el('div',{class:'tb-grid'});
+
+  function tbField(labelText, value, onInput, isSelect, options){
+    const cell = el('div',{class:'tb-cell'});
+    cell.appendChild(el('label',{},[labelText]));
+    let input;
+    if(isSelect){
+      input = el('select',{onchange:(e)=>onInput(e.target.value)});
+      options.forEach(([val,lab])=>{
+        const o = el('option',{value:val},[lab]);
+        if(val===value) o.setAttribute('selected','selected');
+        input.appendChild(o);
+      });
+    } else {
+      input = el('input',{type:'text', value:value, oninput:(e)=>{ onInput(e.target.value); scheduleSave(); }, onblur:()=>saveActiveReview()});
+    }
+    cell.appendChild(input);
+    return cell;
+  }
+
+  grid.appendChild(tbField('審查名稱', r.name, (v)=>{ r.name=v; const item=state.reviewsList.find(x=>x.id===state.activeId); if(item){ item.name=v; saveMeta(); const at=document.querySelector('.tab.active .tab-label'); if(at) at.textContent=tabLabel(item); } }));
+  grid.appendChild(tbField('階段', r.phase, (v)=>{ r.phase=v; saveActiveReview(); }, true, [['mockup_release','Before Mockup Release'],['tooling_release','Tooling Drawing Release']]));
+  grid.appendChild(tbField('審查人', r.reviewer, (v)=>{
+    r.reviewer=v;
+    const item=state.reviewsList.find(x=>x.id===state.activeId);
+    if(item){ item.reviewer=v; saveMeta(); const at=document.querySelector('.tab.active .tab-label'); if(at) at.textContent=tabLabel(item); }
+  }));
+  grid.appendChild(tbField('日期', r.date, (v)=>{ r.date=v; }));
+  grid.appendChild(tbField('版次', r.revision, (v)=>{ r.revision=v; }));
+  tb.appendChild(grid);
+  app.appendChild(tb);
+
+  // ---- sticky action bar ----
+  const lockBtn = el('button',{class: locked ? '' : 'unlocked', title: locked ? '鎖定中：只能修改備註與狀態' : '已解鎖：可修改全部內容', onclick:handleLockToggle},[
+    locked ? (isPasswordExpired() ? '已鎖定（密碼已過期）' : '已鎖定（點擊解鎖）') : '已解鎖（點擊鎖定）'
+  ]);
+  const saveBtn = el('button',{class:'primary', onclick:()=>{
+    document.activeElement && document.activeElement.blur();
+    saveActiveReview();
+  }},['儲存']);
+
+  const clearNotesFn = ()=>{
+    const total = r.categories.reduce((sum,c)=>sum + c.items.filter(it=>it.evidence && it.evidence.trim()).length, 0);
+    if(total===0){ alert('目前沒有任何備註內容可以清空。'); return; }
+    if(!confirm('確定要清空這份審查中所有項目的「備註」內容嗎？（共 '+total+' 項有內容）\n通過基準、狀態、圖片等其他資料不會受影響，此動作無法復原。')) return;
+    r.categories.forEach(c=>c.items.forEach(it=>{ it.evidence=''; }));
+    saveActiveReview();
+  };
+  const resetStatusFn = ()=>{
+    const total = r.categories.reduce((sum,c)=>sum + c.items.filter(it=>it.status!=='pending').length, 0);
+    if(total===0){ alert('目前所有項目都已經是「待審」。'); return; }
+    if(!confirm('確定要把所有項目的狀態都調回「待審」嗎？（共 '+total+' 項會被更改）\n備註、通過基準、圖片等其他內容不會受影響，此動作無法復原。')) return;
+    r.categories.forEach(c=>c.items.forEach(it=>{ it.status='pending'; }));
+    saveActiveReview();
+  };
+  const deleteReviewFn = ()=>{
+    const cur = state.reviewsList.find(x=>x.id===state.activeId); if(cur) requestDeleteTab(cur);
+  };
+  function menuItem(label, fn, opts){
+    return el('button',{class: (opts && opts.danger) ? 'danger' : '', onclick:(e)=>{
+      e.stopPropagation();
+      state.menuOpen = false;
+      fn();
+      render();
+    }},[label]);
+  }
+  const menuChildren = [];
+  if(!locked){
+    menuChildren.push(menuItem(state.viewMode==='brainstorm' ? '返回 Checklist' : '腦力激盪模式（魚骨圖）', ()=>{
+      state.viewMode = state.viewMode==='brainstorm' ? 'checklist' : 'brainstorm';
+    }));
+    menuChildren.push(el('hr'));
+  }
+  menuChildren.push(
+    menuItem('新增空白審查', ()=>createNewReview()),
+    menuItem('匯出備份', ()=>exportBackup(r)),
+    menuItem('匯入備份', ()=>document.getElementById('importFile').click()),
+    menuItem('列印／存成 PDF', ()=>{ setTimeout(()=>window.print(), 200); }),
+    el('hr'),
+    menuItem('全部設為待審', resetStatusFn),
+    menuItem('清空所有備註', clearNotesFn)
+  );
+  if(!locked){
+    menuChildren.push(el('hr'), menuItem('刪除目前分頁', deleteReviewFn, {danger:true}));
+  }
+  menuChildren.push(el('hr'), el('div',{class:'menu-label'},['配色']));
+  THEMES.forEach(([key,label,color])=>{
+    menuChildren.push(el('button',{onclick:(e)=>{
+      e.stopPropagation();
+      state.menuOpen = false;
+      setTheme(key);
+      render();
+    }},[el('i',{class:'swatch', style:'background:'+color}), label + (state.theme===key ? '  ✓' : '')]));
+  });
+  const menuWrap = el('div',{class:'menu-wrap'},[
+    el('button',{onclick:(e)=>{ e.stopPropagation(); state.menuOpen = !state.menuOpen; render(); }},['更多 ▾'])
+  ]);
+  if(state.menuOpen) menuWrap.appendChild(el('div',{class:'menu'},menuChildren));
+
+  const inBrainstorm = (state.viewMode === 'brainstorm' && !locked);
+  let appbarMiddle;
+  if(inBrainstorm){
+    appbarMiddle = el('div',{class:'appbar-progress'},[
+      el('div',{class:'progress-text'},[el('strong',{},['魚骨圖腦力激盪模式']), el('span',{},['整理完成後可轉成 Checklist 分類'])]),
+      el('button',{class:'small primary', onclick:()=>{ state.viewMode='checklist'; render(); }},['← 返回 Checklist'])
+    ]);
+  } else {
+    const reviewed = stats.total - stats.pending;
+    const pct = stats.total ? Math.round(reviewed/stats.total*100) : 0;
+    const legend = (label, n, color)=>el('span',{class:'legend'},[el('i',{class:'dot', style:'background:'+color}), label+' '+n]);
+    const bar = el('div',{class:'overall-bar'});
+    if(stats.total>0){
+      const passPct = stats.pass/stats.total*100;
+      const failPct = stats.fail/stats.total*100;
+      const naPct = stats.na/stats.total*100;
+      if(passPct>0) bar.appendChild(el('div',{style:'width:'+passPct+'%;background:var(--green);'}));
+      if(failPct>0) bar.appendChild(el('div',{style:'width:'+failPct+'%;background:var(--rust);'}));
+      if(naPct>0) bar.appendChild(el('div',{style:'width:'+naPct+'%;background:var(--paper-dim);'}));
+    }
+    const allDone = stats.total>0 && stats.fail===0 && stats.pending===0;
+    appbarMiddle = el('div',{class:'appbar-progress'},[
+      el('div',{class:'progress-text'},[
+        el('span',{},['已審 ', el('strong',{},[reviewed+' / '+stats.total]), ' ('+pct+'%)']),
+        legend('通過', stats.pass, 'var(--green)'),
+        legend('未通過', stats.fail, 'var(--rust)'),
+        legend('待審', stats.pending, 'var(--amber)'),
+        legend('不適用', stats.na, 'var(--paper-dim)'),
+        allDone ? el('span',{class:'all-done'},['全部完成']) : null
+      ].filter(Boolean)),
+      bar
+    ]);
+  }
+  app.appendChild(el('div',{class:'appbar'},[
+    appbarMiddle,
+    el('div',{class:'appbar-right'},[lockBtn, saveBtn, menuWrap])
+  ]));
+
+  if(state.viewMode === 'brainstorm' && !locked){
+    renderBrainstorm(app, r);
+    return;
+  }
+
+  // ---- filter bar ----
+  const issueCount = r.categories.reduce((sum,c)=>sum + c.items.filter(it=>(it.issue && it.issue.trim()) || (Array.isArray(it.issueImages) && it.issueImages.length)).length, 0);
+  const chipDefs = [['all','全部',stats.total],['pending','待審',stats.pending],['fail','未通過',stats.fail],['pass','通過',stats.pass],['na','不適用',stats.na],['issue','有 Issue',issueCount]];
+  const chips = el('div',{class:'chips'}, chipDefs.map(([k,lab,n])=>
+    el('button',{class:'chip'+(state.filterStatus===k?' active':''), onclick:()=>{ state.filterStatus=k; render(); }},[lab, el('span',{class:'n'},[String(n)])])
+  ));
+  const searchBox = el('input',{type:'search', class:'search-box', placeholder:'搜尋項目、規範、備註…', value:state.searchText, oninput:(e)=>{ state.searchText = e.target.value; applyFilters(); }});
+  app.appendChild(el('div',{class:'filterbar'},[
+    searchBox,
+    chips,
+    el('div',{class:'filter-spacer'},[
+      el('span',{class:'count-note'},[r.categories.length+' 個分類 · '+stats.total+' 項']),
+      el('button',{class:'small', onclick:()=>{ r.categories.forEach(c=>c._collapsed=false); render(); }},['全部展開']),
+      el('button',{class:'small', onclick:()=>{ r.categories.forEach(c=>c._collapsed=true); render(); }},['全部收合'])
+    ])
+  ]));
+  app.appendChild(el('div',{class:'empty-state', id:'noResult', style:'display:none;'},[el('p',{},['沒有符合條件的項目'])]));
+
+  // categories
+  r.categories.forEach((cat, catIdx)=>{
+    const cs = catCountStatus(cat);
+    const catColor = CAT_COLORS[catIdx % CAT_COLORS.length];
+    const catIcon = CAT_ICONS[catIdx % CAT_ICONS.length];
+    const catEl = el('div',{class:'category'+(cat._collapsed?' collapsed':''), style:`border-left:4px solid ${catColor};`});
+    const head = el('div',{class:'category-head', onclick:()=>{ cat._collapsed=!cat._collapsed; render(); }},[
+      el('div',{class:'category-head-left'},[
+        el('span',{class:'chevron'},['▾']),
+        el('span',{class:'cat-icon-num'},[(catIdx+1)+'.']),
+        el('input',{class:'cat-name-input', type:'text', value:cat.name, disabled: locked ? 'disabled' : null,
+          onclick:(e)=>e.stopPropagation(),
+          oninput:(e)=>{ cat.name=e.target.value; scheduleSave(); },
+          onblur:()=>saveActiveReview()
+        })
+      ]),
+      (()=>{
+        const rightControls = [];
+        if(cs.fail>0) rightControls.push(el('span',{class:'cat-fail'},['未通過 '+cs.fail]));
+        rightControls.push(
+          el('span',{class:'cat-progress'},[cs.done+' / '+cs.total]),
+          el('div',{class:'cat-bar'},[el('div',{style:`width:${cs.total? (cs.done/cs.total*100):0}%;background:${catColor};`})])
+        );
+        const actions = [];
+        if(!locked){
+          actions.push(
+            el('button',{class:'small reorder-btn', title:'往上移動', onclick:(e)=>{
+              e.stopPropagation();
+              if(catIdx>0){
+                const tmp = r.categories[catIdx-1];
+                r.categories[catIdx-1] = r.categories[catIdx];
+                r.categories[catIdx] = tmp;
+                saveActiveReview(); render();
+              }
+            }},['▲']),
+            el('button',{class:'small reorder-btn', title:'往下移動', onclick:(e)=>{
+              e.stopPropagation();
+              if(catIdx<r.categories.length-1){
+                const tmp = r.categories[catIdx+1];
+                r.categories[catIdx+1] = r.categories[catIdx];
+                r.categories[catIdx] = tmp;
+                saveActiveReview(); render();
+              }
+            }},['▼'])
+          );
+        }
+        actions.push(el('button',{class:'small', onclick:(e)=>{
+          e.stopPropagation();
+          cat._bulkEdit = !cat._bulkEdit;
+          cat._collapsed = false;
+          render();
+        }},[cat._bulkEdit ? '卡片檢視' : '表格檢視']));
+        if(!locked){
+          actions.push(
+            el('button',{class:'small cat-add', onclick:(e)=>{
+              e.stopPropagation();
+              cat.items.push({id:uid('it'), text:'', criteria:'', evidence:'', owner:'', status:'pending', _focus:true});
+              cat._collapsed = false;
+              saveActiveReview(); render();
+            }},['+ 新增項目']),
+            el('button',{class:'small danger-ghost', onclick:(e)=>{ e.stopPropagation(); if(confirm('刪除整個分類「'+cat.name+'」？')){ r.categories.splice(catIdx,1); saveActiveReview(); render(); } }},['刪除分類'])
+          );
+        }
+        rightControls.push(el('div',{class:'cat-actions'},actions));
+        return el('div',{class:'cat-right'},rightControls);
+      })()
+    ]);
+    catEl.appendChild(head);
+
+    const body = el('div',{class:'category-body'});
+    const bulkLabels = cat.fieldLabels || {criteria:'通過基準', evidence:'備註'};
+
+    if(cat._bulkEdit){
+      const table = el('div',{class:'bulk-table'});
+      table.appendChild(el('div',{class:'bulk-row bulk-header'},[
+        el('div',{class:'bulk-cell bulk-num'},['#']),
+        el('div',{class:'bulk-cell bulk-text'},['項目描述']),
+        el('div',{class:'bulk-cell bulk-crit'},[bulkLabels.criteria]),
+        el('div',{class:'bulk-cell bulk-evid'},[bulkLabels.evidence]),
+        el('div',{class:'bulk-cell bulk-status'},['狀態']),
+        el('div',{class:'bulk-cell bulk-move'},['移動']),
+        el('div',{class:'bulk-cell bulk-del'},[''])
+      ]));
+      cat.items.forEach((it, itIdx)=>{
+        const statusSelect = el('select',{class:'bulk-status-select', onchange:(e)=>{ it.status=e.target.value; saveActiveReview(); render(); }});
+        STATUS.forEach(s=>{
+          const opt = el('option',{value:s},[STATUS_LABEL[s]]);
+          if(it.status===s) opt.setAttribute('selected','selected');
+          statusSelect.appendChild(opt);
+        });
+        const bulkMoveSelect = el('select',{class:'bulk-status-select', onchange:(e)=>{
+          const targetId = e.target.value;
+          if(!targetId) return;
+          const targetCat = r.categories.find(c=>c.id===targetId);
+          if(!targetCat) return;
+          cat.items.splice(itIdx,1);
+          targetCat.items.push(it);
+          saveActiveReview(); render();
+        }});
+        bulkMoveSelect.appendChild(el('option',{value:''},['移動到…']));
+        r.categories.forEach(c=>{
+          if(c.id===cat.id) return;
+          bulkMoveSelect.appendChild(el('option',{value:c.id},[c.name]));
+        });
+        table.appendChild(el('div',{class:'bulk-row', 'data-iid':it.id, 'data-status':it.status},[
+          el('div',{class:'bulk-cell bulk-num'},[(catIdx+1)+'.'+(itIdx+1)]),
+          el('div',{class:'bulk-cell bulk-text'},[
+            el('textarea',{class:'bulk-input bulk-textarea', rows:'1', placeholder:'審查項目描述', value:it.text, disabled: locked ? 'disabled' : null, oninput:(e)=>{ it.text=e.target.value; scheduleSave(); }, onblur:()=>saveActiveReview()})
+          ]),
+          el('div',{class:'bulk-cell bulk-crit'},[
+            el('input',{class:'bulk-input', type:'text', value:it.criteria, disabled: locked ? 'disabled' : null, oninput:(e)=>{ it.criteria=e.target.value; scheduleSave(); }, onblur:()=>saveActiveReview()})
+          ]),
+          el('div',{class:'bulk-cell bulk-evid'},[
+            el('input',{class:'bulk-input', type:'text', value:it.evidence, oninput:(e)=>{ it.evidence=e.target.value; scheduleSave(); }, onblur:()=>saveActiveReview()})
+          ]),
+          el('div',{class:'bulk-cell bulk-status'},[statusSelect]),
+          el('div',{class:'bulk-cell bulk-move'},[locked ? '' : bulkMoveSelect]),
+          el('div',{class:'bulk-cell bulk-del'}, locked ? [] : [
+            el('div',{style:'display:flex;gap:2px;'},[
+              el('button',{class:'item-reorder-btn', title:'往上移動', onclick:()=>{
+                if(itIdx>0){
+                  const tmp = cat.items[itIdx-1];
+                  cat.items[itIdx-1] = cat.items[itIdx];
+                  cat.items[itIdx] = tmp;
+                  saveActiveReview(); render();
+                }
+              }},['▲']),
+              el('button',{class:'item-reorder-btn', title:'往下移動', onclick:()=>{
+                if(itIdx<cat.items.length-1){
+                  const tmp = cat.items[itIdx+1];
+                  cat.items[itIdx+1] = cat.items[itIdx];
+                  cat.items[itIdx] = tmp;
+                  saveActiveReview(); render();
+                }
+              }},['▼'])
+            ]),
+            el('button',{class:'small danger-ghost', onclick:()=>{ cat.items.splice(itIdx,1); saveActiveReview(); render(); }},['×'])
+          ])
+        ]));
+      });
+      body.appendChild(table);
+      if(!locked){
+        const addRowBtn = el('button',{class:'small add-item-btn', onclick:()=>{
+          cat.items.push({id:uid('it'), text:'', criteria:'', evidence:'', owner:'', status:'pending'});
+          saveActiveReview(); render();
+        }},['+ 新增列']);
+        body.appendChild(addRowBtn);
+      }
+    } else {
+      cat.items.forEach((it, itIdx)=>{
+      const row = el('div',{class:'item-row', 'data-iid':it.id, 'data-status':it.status, onpaste:(e)=>handleItemPaste(e, it)});
+      const top = el('div',{class:'item-top'});
+      top.appendChild(el('div',{class:'item-num'},[(catIdx+1)+'.'+(itIdx+1)]));
+
+      const main = el('div',{class:'item-main'});
+      const textArea = el('textarea',{class:'item-text', rows:'1', placeholder:'審查項目描述', 'data-item-id':it.id, disabled: locked ? 'disabled' : null, oninput:(e)=>{
+        it.text = e.target.value;
+        e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px';
+        scheduleSave();
+      }, onblur:()=>saveActiveReview()});
+      textArea.value = it.text;
+      const statusSeg = el('div',{class:'status-seg'});
+      STATUS.forEach(st=>{
+        statusSeg.appendChild(el('button',{class:'status-btn'+(it.status===st?' active':''), 'data-s':st, onclick:()=>{ it.status=st; saveActiveReview(); render(); }},[STATUS_LABEL[st]]));
+      });
+      main.appendChild(el('div',{class:'item-head'},[textArea, statusSeg]));
+
+      const meta = el('div',{class:'item-meta'});
+      function metaField(labelText, val, ph, onInput, fieldLocked){
+        const f = el('div',{class:'field'});
+        f.appendChild(el('label',{},[labelText]));
+        const input = el('textarea',{class:'meta-textarea', rows:'1', placeholder:ph, disabled: fieldLocked ? 'disabled' : null, oninput:(e)=>{
+          onInput(e.target.value);
+          e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px';
+          scheduleSave();
+        }, onblur:()=>saveActiveReview()});
+        input.value = val;
+        f.appendChild(input);
+        return f;
+      }
+      const labels = cat.fieldLabels || {criteria:'通過基準', evidence:'備註'};
+      meta.appendChild(metaField(labels.criteria, it.criteria, '', v=>it.criteria=v, locked));
+      meta.appendChild(metaField(labels.evidence, it.evidence, '', v=>it.evidence=v, false));
+      main.appendChild(meta);
+
+      if(!Array.isArray(it.images)) it.images = [];
+      if(!locked || it.images.length>0){
+        main.appendChild(buildImageGallery(it, 'images', !locked, '點擊上傳，或在這個項目裡按 Ctrl+V／Cmd+V 貼上截圖'));
+      }
+
+      // ---- Issue 描述（鎖定時也可填寫，像備註一樣屬於填寫內容）----
+      if(!Array.isArray(it.issueImages)) it.issueImages = [];
+      const hasIssue = !!((it.issue && it.issue.trim()) || it.issueImages.length);
+      if(hasIssue || state.issueOpen[it.id]){
+        const issueBox = el('div',{class:'item-issue'+(hasIssue ? ' has-issue' : ''), tabindex:'0'});
+        issueBox.appendChild(el('label',{},['Issue 描述']));
+        const issueTa = el('textarea',{class:'meta-textarea issue-textarea', rows:'1', 'data-issue-for':it.id, placeholder:'描述問題；可直接按 Ctrl+V 貼上截圖', oninput:(e)=>{
+          it.issue = e.target.value;
+          e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px';
+          scheduleSave();
+        }, onblur:()=>saveActiveReview()});
+        issueTa.value = it.issue || '';
+        issueBox.appendChild(issueTa);
+        issueBox.appendChild(buildImageGallery(it, 'issueImages', true, '點擊上傳，或在 Issue 區按 Ctrl+V／Cmd+V 貼上截圖'));
+        main.appendChild(issueBox);
+      } else {
+        main.appendChild(el('button',{class:'small issue-open-btn', onclick:()=>{
+          state.issueOpen[it.id] = true;
+          state.focusIssueId = it.id;
+          render();
+        }},['+ Issue 描述 / 貼圖']));
+      }
+
+      if(!locked){
+        const actions = el('div',{class:'item-actions'});
+        if(r.categories.length > 1){
+          const moveSelect = el('select',{class:'move-select', onchange:(e)=>{
+            const targetId = e.target.value;
+            if(!targetId) return;
+            const targetCat = r.categories.find(c=>c.id===targetId);
+            if(!targetCat) return;
+            cat.items.splice(itIdx,1);
+            targetCat.items.push(it);
+            saveActiveReview(); render();
+          }});
+          moveSelect.appendChild(el('option',{value:''},['移動到…']));
+          r.categories.forEach(c=>{
+            if(c.id===cat.id) return;
+            moveSelect.appendChild(el('option',{value:c.id},[c.name]));
+          });
+          actions.appendChild(moveSelect);
+        }
+        actions.appendChild(el('button',{class:'small danger-ghost', onclick:()=>{ cat.items.splice(itIdx,1); saveActiveReview(); render(); }},['刪除項目']));
+        main.appendChild(actions);
+      }
+
+      top.appendChild(main);
+      if(!locked){
+        const itemReorder = el('div',{class:'item-reorder'},[
+          el('button',{class:'item-reorder-btn', title:'項目往上移動', onclick:()=>{
+            if(itIdx>0){
+              const tmp = cat.items[itIdx-1];
+              cat.items[itIdx-1] = cat.items[itIdx];
+              cat.items[itIdx] = tmp;
+              saveActiveReview(); render();
+            }
+          }},['▲']),
+          el('button',{class:'item-reorder-btn', title:'項目往下移動', onclick:()=>{
+            if(itIdx<cat.items.length-1){
+              const tmp = cat.items[itIdx+1];
+              cat.items[itIdx+1] = cat.items[itIdx];
+              cat.items[itIdx] = tmp;
+              saveActiveReview(); render();
+            }
+          }},['▼'])
+        ]);
+        top.appendChild(itemReorder);
+      }
+      row.appendChild(top);
+      body.appendChild(row);
+      });
+
+      if(!locked){
+        const addItemBtn = el('button',{class:'small add-item-btn', onclick:()=>{
+          cat.items.push({id:uid('it'), text:'', criteria:'', evidence:'', owner:'', status:'pending'});
+          saveActiveReview(); render();
+        }},['+ 新增審查項目']);
+        body.appendChild(addItemBtn);
+      }
+    }
+
+    catEl.appendChild(body);
+    app.appendChild(catEl);
+  });
+
+  if(!locked){
+    const addCatPanel = el('div',{class:'signoff', style:'margin-bottom:16px;'});
+    addCatPanel.appendChild(el('h2',{},['新增分類']));
+    const addCatRow = el('div',{style:'display:flex;gap:10px;flex-wrap:wrap;align-items:center;'},[
+      el('button',{onclick:()=>{
+        const name = prompt('新分類名稱（例：安規／EMC）');
+        if(name && name.trim()){
+          r.categories.push({id:uid('cat'), name:name.trim(), items:[]});
+          saveActiveReview(); render();
+        }
+      }},['+ 自訂分類'])
+    ]);
+    const templateSelect = el('select',{class:'review-select', style:'min-width:220px;'});
+    Object.entries(TEMPLATE_REGISTRY).forEach(([key,tpl])=>{
+      templateSelect.appendChild(el('option',{value:key},[tpl.label]));
+    });
+    addCatRow.appendChild(templateSelect);
+    addCatRow.appendChild(el('button',{class:'primary', onclick:()=>{
+      const key = templateSelect.value;
+      const tpl = TEMPLATE_REGISTRY[key];
+      if(!tpl) return;
+      if(confirm('加入「'+tpl.label+'」範本分類，會新增為獨立分類，不影響現有內容？')){
+        r.categories.push(tpl.fn());
+        saveActiveReview(); render();
+      }
+    }},['+ 加入範本分類']));
+    addCatPanel.appendChild(addCatRow);
+    app.appendChild(addCatPanel);
+  }
+
+  applyFilters();
+
+  if(state.focusIssueId){
+    const ita = document.querySelector('.issue-textarea[data-issue-for="'+state.focusIssueId+'"]');
+    if(ita) ita.focus();
+    state.focusIssueId = null;
+  }
+
+  const focusItem = r.categories.flatMap(c=>c.items).find(i=>i._focus);
+  if(focusItem){
+    delete focusItem._focus;
+    const ta = document.querySelector('textarea[data-item-id="'+focusItem.id+'"]');
+    if(ta) ta.focus();
+  }
+}
+
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) importBackup(file);
+  e.target.value = '';
+});
+document.addEventListener('click', (e)=>{
+  if(state.menuOpen && !(e.target.closest && e.target.closest('.menu-wrap'))){
+    state.menuOpen = false;
+    render();
+  }
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && state.menuOpen){ state.menuOpen = false; render(); }
+});
+
+loadAll();
+</script>
+</body>
+</html>
